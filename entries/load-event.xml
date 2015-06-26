@@ -22,19 +22,17 @@
   <longdesc>
     <p>This method is a shortcut for <code>.on( "load", handler )</code>.</p>
     <p>The <code>load</code> event is sent to an element when it and all sub-elements have been completely loaded. This event can be sent to any element associated with a URL: images, scripts, frames, iframes, and the <code>window</code> object.</p>
-    <p>For example, consider a page with a simple image:</p>
+    <p>For example, consider a page with an iframe:</p>
     <pre><code>
-&lt;img src="book.png" alt="Book" id="book"&gt;
+&lt;iframe src="/my-beautiful-widget.html" id="widget"&gt;
     </code></pre>
-    <p>The event handler can be bound to the image:</p>
+    <p>The event handler can be bound to the iframe:</p>
     <pre><code>
-$( "#book" ).load(function() {
+$( "#widget" ).load(function() {
   // Handler for .load() called.
 });
     </code></pre>
-    <p>As soon as the image has been loaded, the handler is called.</p>
-    <p>In general, it is not necessary to wait for all images to be fully loaded. If code can be executed earlier, it is usually best to place it in a handler sent to the <code>.ready()</code> method.
-    </p>
+    <p>As soon as the iframe has been loaded, the handler is called.</p>
     <div class="warning">
       <p>The Ajax module also has a method named <code><a href="/load/">.load()</a></code>. Which one is fired depends on the set of arguments passed.</p>
     </div>
@@ -51,11 +49,11 @@ $( "#book" ).load(function() {
       </p>
     </div>
     <div class="warning">
-      <p><strong>Note:</strong> The <code>.live()</code> and <code>.delegate()</code> methods cannot be used to detect the <code>load</code> event of an iframe. The load event does not correctly bubble up the parent document and the event.target isn't set by Firefox, IE9 or Chrome, which is required to do event delegation.</p>
+      <p><strong>Note:</strong> The <code>.live()</code> and <code>.delegate()</code> methods cannot be used to detect the <code>load</code> event of an iframe. The load event does not correctly bubble up the parent document and the <code>event.target</code> isn't set by Firefox, IE9 or Chrome, which is required to do event delegation.</p>
     </div>
   </longdesc>
   <example>
-    <desc>Run a function when the page is fully loaded including graphics.</desc>
+    <desc>Run a function when the page is fully loaded including graphics and other resources.</desc>
     <code><![CDATA[
 $( window ).load(function() {
   // Run code
@@ -63,11 +61,27 @@ $( window ).load(function() {
 ]]></code>
   </example>
   <example>
-    <desc>Add the class bigImg to all images with height greater than 100 upon each image load.</desc>
-    <code><![CDATA[
-$( "img.userIcon" ).load(function() {
-  if ( $( this ).height() > 100) {
-    $( this ).addClass( "bigImg" );
+        <desc>Add the class bigImg to each image with height greater than 100 on load, implementing a partial workaround for image-loading issues.</desc>
+        <code><![CDATA[
+var setBigClass = function( img ) {
+  if ( $( img ).height() > 100 ) {
+    $( img ).addClass( "bigImg" );
+  }
+};
+
+$( "img.userIcon" ).each(function() {
+  var src = this.src;
+  var blank = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+
+  // IE sets a "complete" property on already-loaded images
+  if ( this.complete ) {
+    setBigClass( this );
+  } else {
+    $( this ).load( setBigClass );
+
+    // Avoid Webkit bug by quickly swapping src back and forth
+    this.src = blank;
+    this.src = src;
   }
 });
 ]]></code>
